@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe "ResqueDistributedPool" do
-  it "fails" do
-    fail "hey buddy, you should probably rename this file and start specing for real"
+describe "DistributedPool" do
+  it "has access to redis" do 
+    
   end
 end
