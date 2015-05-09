@@ -24,7 +24,6 @@ module Resque
       end
 
       def unregister
-        puts("Unregistering")
         unping
         rebalance_cluster if @rebalance_on_termination
         remove_member_command_queue
@@ -70,13 +69,10 @@ module Resque
       def check_for_worker_count_adjustment
         if !(host_count_adjustment = Resque.redis.lpop(member_command_queue_key_name)).nil?
           adjust_worker_counts(host_count_adjustment)
-        elsif !(global_count_adjustment = Resque.redis.lpop(global_command_queue_key_name)).nil?
-          adjust_worker_counts(global_count_adjustment)
         end
       end
 
       def adjust_worker_counts(count_adjustment)
-        puts "New count: #{count_adjustment}"
         worker_name, adjustment = count_adjustment.split(':')
         kickback = (@pool.nil? ? count_adjustment : @pool.adjust_worker_counts(worker_name, adjustment.to_i))
         Resque.redis.lpush(global_command_queue_key_name, kickback) unless kickback.empty?
