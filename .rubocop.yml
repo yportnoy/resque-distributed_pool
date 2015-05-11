@@ -1,0 +1,6 @@
+AllCops:
+  Exclude:
+    - bin/**
+
+LineLength:
+  Enabled: false
