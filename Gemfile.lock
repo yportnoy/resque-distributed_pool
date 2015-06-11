@@ -1,5 +1,6 @@
-PATH
-  remote: ../gru
+GIT
+  remote: git://github.com/jgillis01/gru.git
+  revision: 2cf074a5f8b48024dc3b9eb70ceea1c15159fed9
   specs:
     gru (0.0.1)
       redis (> 0.0)

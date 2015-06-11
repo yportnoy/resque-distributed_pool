@@ -4,7 +4,7 @@ gem 'resque', '~> 1.22'
 gem 'resque-pool', '~> 0.5.0'
 gem 'trollop', '~> 2.0'
 gem 'rake'
-gem 'gru', path: '../gru'
+gem 'gru', github: 'jgillis01/gru'
 
 group :development do
   gem 'pry'
