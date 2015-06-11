@@ -4,7 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 RSpec.describe Resque::DistributedPool::Member do
   before :all do
     @redis = Redis.new
-    @member = Resque::DistributedPool.init('test-cluster', 'test', true)
+    @member = Resque::DistributedPool.init('test-cluster', 'test', {}, true)
     @member.pool = Resque::Pool.new('foo' => 1)
     @hostname = Socket.gethostname
   end

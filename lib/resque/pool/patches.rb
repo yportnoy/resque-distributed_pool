@@ -27,7 +27,6 @@ module Resque
     end
 
     def adjust_worker_counts(worker, number)
-      puts "Old config #{@config}"
       over_adjustment = ''
       if @config[worker].to_i + number < 0
         over_adjustment = "#{worker}:#{@config[worker].to_i + number}"
@@ -35,7 +34,6 @@ module Resque
       else
         @config[worker] = @config[worker].to_i + number
       end
-      puts "New config #{@config}"
       over_adjustment
     end
   end

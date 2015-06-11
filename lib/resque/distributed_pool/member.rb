@@ -5,12 +5,13 @@ module Resque
   class DistributedPool
     # Member is a single member of a resque pool cluster
     class Member
-      attr_reader :cluster, :environment, :hostname, :rebalance_on_termination, :pool
+      attr_reader :cluster, :environment, :hostname, :rebalance_on_termination, :pool, :global_config
 
-      def initialize(cluster, environment, rebalance_on_termination = false)
+      def initialize(cluster, environment, global_config, rebalance = false)
         @cluster = cluster
         @environment = environment
         @hostname = Socket.gethostname
+        @global_config = global_config
         register
       end
 
@@ -36,13 +37,13 @@ module Resque
       def pool=(started_pool)
         @pool = started_pool
         client = Redis.new(Resque.redis.client.options)
-        @worker_count_manager = Gru.with_redis_connection(client,@pool.config,@pool.config)
+        @worker_count_manager = Gru.with_redis_connection(client,@pool.config, (@global_config.empty? ? @pool.config : @global_config))
         @pool.instance_variable_set(:@config, @worker_count_manager.adjust_workers)
         update_counts
       end
 
       def check_for_worker_count_adjustment
-        #host_count_adjustment = Resque.redis.lpop(member_command_queue_key_name)
+        return unless @worker_count_manager
         host_count_adjustment = @worker_count_manager.adjust_workers
         return if host_count_adjustment.nil?
         adjust_worker_counts(host_count_adjustment)
@@ -108,7 +109,6 @@ module Resque
 
       def update_counts
         return if @pool.nil?
-        #current_workers = @worker_count_manager.available_workers
         current_workers = @pool.config
         current_workers.each do |key, value|
           Resque.redis.hset(running_workers_key_name, key, value)

@@ -1,4 +1,5 @@
 require 'resque/distributed_pool/member'
+require 'yaml'
 
 module Resque
   class Pool
@@ -10,8 +11,9 @@ module Resque
 
       define_method(:setup_environment) do |opts|
         original_setup_environment.bind(self).call(opts)
-        puts "Starting as a cluster: #{opts[:cluster]} in #{opts[:environment]} environment, #{opts[:rebalance_on_termination]}"
-        Resque::DistributedPool.init(opts[:cluster], opts[:environment], opts[:rebalance_on_termination]) if opts[:cluster]
+        puts "Starting as a cluster: #{opts[:cluster]} in #{opts[:environment]} environment, rebalance?: #{opts[:rebalance]}"
+        global_config = parse_global_config(opts[:global_config]) unless opts[:global_config].nil?
+        Resque::DistributedPool.init(opts[:cluster], opts[:environment], global_config, opts[:rebalance]) if opts[:cluster]
       end
 
       # rubocop:disable all
@@ -42,7 +44,8 @@ where [options] are:
           opt :term_immediate,     'On TERM signal, shut down workers immediately (default)'
           opt :single_process_group, 'Workers remain in the same process group as the master', default: false
           opt :cluster, 'Name of the cluster this resque-pool belongs to', type: String, short: '-C'
-          opt :rebalance_on_termination, 'In a cluster mode, On TERM signal rebalance', default: false, short: '-R'
+          opt :rebalance, 'In a cluster mode, On TERM signal rebalance', default: false, short: '-R'
+          opt :global_config, 'Alternate path to the global config file', type: String, short: '-G'
         end
         if opts[:daemon]
           opts[:stdout] ||= 'log/resque-pool.stdout.log'
@@ -52,6 +55,11 @@ where [options] are:
         opts
       end
       # rubocop:enable all
+
+      def parse_global_config(global_config_path)
+        return {} unless File.exists?(global_config_path)
+        YAML.load(ERB.new(IO.read(global_config_path)).result)
+      end
     end
   end
 end
