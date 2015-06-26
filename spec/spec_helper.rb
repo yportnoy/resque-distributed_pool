@@ -1,4 +1,5 @@
 gem 'resque-pool'
+require 'pry'
 require 'resque/pool/cli'
 require 'rspec'
 
