@@ -1,12 +1,26 @@
 require 'socket'
+require 'pry'
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 RSpec.describe Resque::DistributedPool::Member do
   before :all do
     @redis = Redis.new
-    @member = Resque::DistributedPool.init('test-cluster', 'test', {}, true)
-    @member.pool = Resque::Pool.new('foo' => 1)
+
+    Resque::DistributedPool.config = {
+      cluster_name: 'test-cluster',
+      environment: 'test',
+      local_config_path: 'spec/local_config.yml',
+      global_config_path: 'spec/global_config.yml',
+      rebalance: true }
+    @pool = Resque::Pool.new({foo: 2})
+    @member = Resque::DistributedPool.init(@pool)
     @hostname = Socket.gethostname
+  end
+
+  context '#initialize' do
+    xit 'after initialization local config will be empty' do
+      expect(@member.pool.config).to be_empty
+    end
   end
 
   context '#register' do
@@ -35,12 +49,6 @@ RSpec.describe Resque::DistributedPool::Member do
         expect(@member.pool.config['foo']).to eq(1)
         expect(@member.pool.config['bar']).to eq(2)
       end
-    end
-
-    xit 'puts the counts it cannot adjust into the global queue' do
-      @member.check_for_worker_count_adjustment
-      expect(@redis.hget("cluster:test-cluster:test:#{@hostname}:running_workers", 'baz')).to eq '0'
-      expect(@redis.lpop('cluster:test-cluster:test:command_queue')).to eq 'baz:-2'
     end
   end
 

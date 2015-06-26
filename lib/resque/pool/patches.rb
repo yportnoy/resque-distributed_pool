@@ -8,8 +8,9 @@ module Resque
       if GC.respond_to?(:copy_on_write_friendly=)
         GC.copy_on_write_friendly = true
       end
-      started_pool = Resque::Pool.new(choose_config_file).start
-      Resque::DistributedPool.member.pool = started_pool if Resque::DistributedPool.member
+      pool_config = Resque::DistributedPool.config ? {} : choose_config_file
+      started_pool = Resque::Pool.new(pool_config).start
+      Resque::DistributedPool.init(started_pool) if Resque::DistributedPool.config
       started_pool.join
       Resque::DistributedPool.member.unregister if Resque::DistributedPool.member
     end
@@ -17,13 +18,12 @@ module Resque
     # performed inside the run loop, must check for any distributed pool updates
     original_maintain_worker_count = instance_method(:maintain_worker_count)
     define_method(:maintain_worker_count) do
-      distributed_pool_update if Resque::DistributedPool.member
+      distributed_pool_update
       original_maintain_worker_count.bind(self).call
     end
 
     def distributed_pool_update
-      Resque::DistributedPool.member.check_for_worker_count_adjustment
-      Resque::DistributedPool.member.ping
+      Resque::DistributedPool.member.perform if Resque::DistributedPool.member
     end
 
     def adjust_worker_counts(worker, number)

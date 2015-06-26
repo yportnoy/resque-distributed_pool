@@ -11,9 +11,15 @@ module Resque
 
       define_method(:setup_environment) do |opts|
         original_setup_environment.bind(self).call(opts)
-        puts "Starting as a cluster: #{opts[:cluster]} in #{opts[:environment]} environment, rebalance?: #{opts[:rebalance]}"
-        global_config = parse_global_config(opts[:global_config]) unless opts[:global_config].nil?
-        Resque::DistributedPool.init(opts[:cluster], opts[:environment], global_config, opts[:rebalance]) if opts[:cluster]
+        if opts[:cluster]
+          puts "Starting as a cluster: #{opts[:cluster]} in #{opts[:environment]} environment, rebalance?: #{opts[:rebalance]}"
+          Resque::DistributedPool.config = {
+            cluster_name: opts[:cluster],
+            environment: opts[:environment],
+            local_config_path: opts[:config],
+            global_config_path: opts[:global_config],
+            rebalance: opts[:rebalance] }
+        end
       end
 
       # rubocop:disable all
@@ -55,11 +61,6 @@ where [options] are:
         opts
       end
       # rubocop:enable all
-
-      def parse_global_config(global_config_path)
-        return {} unless File.exists?(global_config_path)
-        YAML.load(ERB.new(IO.read(global_config_path)).result)
-      end
     end
   end
 end

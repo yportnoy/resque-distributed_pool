@@ -5,8 +5,9 @@ module Resque
   class DistributedPool
     class << self
       attr_reader :member
-      def init(cluster_name, environment_name, global_config, rebalance)
-        @member = Member.new(cluster_name, environment_name, global_config, rebalance)
+      attr_accessor :config
+      def init(started_pool)
+        @member = Member.new(started_pool)
       end
     end
   end
